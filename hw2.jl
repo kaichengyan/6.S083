@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.0
+# v0.12.21
 
 using Markdown
 using InteractiveUtils
@@ -12,6 +12,11 @@ macro bind(def, element)
         el
     end
 end
+
+# ╔═╡ f7a6d7c3-37b9-437d-8b8e-853665ddbae3
+filter!(LOAD_PATH) do path
+	path != "@v#.#"
+end;
 
 # ╔═╡ 65780f00-ed6b-11ea-1ecf-8b35523a7ac0
 begin
@@ -30,11 +35,6 @@ begin
 	using HypertextLiteral
 	using OffsetArrays
 end
-
-# ╔═╡ f7a6d7c3-37b9-437d-8b8e-853665ddbae3
-filter!(LOAD_PATH) do path
-	path != "@v#.#"
-end;
 
 # ╔═╡ 83eb9ca0-ed68-11ea-0bc5-99a09c68f867
 md"_homework 2, version 1_"
@@ -57,7 +57,7 @@ Feel free to ask questions!
 # ╔═╡ 911ccbce-ed68-11ea-3606-0384e7580d7c
 # edit the code below to set your name and kerberos ID (i.e. email without @mit.edu)
 
-student = (name = "SOLUTIONS", kerberos_id = "SOLUTIONS")
+student = (name = "Kyle Yan", kerberos_id = "kyleyan")
 
 # press the ▶ button in the bottom right of this cell to run your edits
 # or use Shift+Enter
@@ -101,7 +101,7 @@ Let's create a vector `v` of random numbers of length `n=100`.
 """
 
 # ╔═╡ 7fcd6230-ee09-11ea-314f-a542d00d582e
-n = 60
+n = 20
 
 # ╔═╡ 7fdb34dc-ee09-11ea-366b-ffe10d1aa845
 v = rand(n)
@@ -136,8 +136,7 @@ A better solution is to use the *closest* value that is inside the vector. Effec
 
 # ╔═╡ 802bec56-ee09-11ea-043e-51cf1db02a34
 function extend(v::AbstractVector, i)
-	
-	return missing
+	v[clamp(i, 1, length(v))]
 end
 
 # ╔═╡ b7f3994c-ee1b-11ea-211a-d144db8eafc2
@@ -167,8 +166,7 @@ md"""
 
 # ╔═╡ 5fdc5d0d-a52c-476e-b3b5-3b6364b706e4
 function mean(v)
-	
-	return missing
+	sum(v) / length(v)
 end
 
 # ╔═╡ e84c9cc2-e6e1-46f1-bf4e-9605da5e6f4a
@@ -179,31 +177,6 @@ md"""
 Return a vector of the same size as `v`.
 """
 
-# ╔═╡ 807e5662-ee09-11ea-3005-21fdcc36b023
-function box_blur(v::AbstractArray, l)
-	
-	return missing
-end
-
-# ╔═╡ 4f08ebe8-b781-4a32-a218-5ecd8338561d
-colored_line(box_blur(example_vector, 1))
-
-# ╔═╡ 808deca8-ee09-11ea-0ee3-1586fa1ce282
-let
-	try
-		test_v = rand(n)
-		original = copy(test_v)
-		box_blur(test_v, 5)
-		if test_v != original
-			md"""
-			!!! danger "Oopsie!"
-			    It looks like your function _modifies_ `v`. Can you write it without doing so? Maybe you can use `copy`.
-			"""
-		end
-	catch
-	end
-end
-
 # ╔═╡ 809f5330-ee09-11ea-0e5b-415044b6ac1f
 md"""
 #### Exercise 1.4
@@ -211,13 +184,10 @@ md"""
 """
 
 # ╔═╡ e555a7e6-f11a-43ac-8218-6d832f0ce251
-
+ @bind l_box Slider(0:5, show_value=true, default = 0)
 
 # ╔═╡ 302f0842-453f-47bd-a74c-7942d8c96485
-
-
-# ╔═╡ 7d80a1ea-a0a9-41b2-9cfe-a334717ab2f4
-
+colored_line(v)
 
 # ╔═╡ 80ab64f4-ee09-11ea-29b4-498112ed0799
 md"""
@@ -235,12 +205,6 @@ Again, we need to take care about what happens if $v_{i -m }$ falls off the end 
    You will either need to do the necessary manipulation of indices by hand, or use the `OffsetArrays.jl` package.
 """
 
-# ╔═╡ 28e20950-ee0c-11ea-0e0a-b5f2e570b56e
-function convolve(v::AbstractVector, k)
-	
-	return missing
-end
-
 # ╔═╡ cf73f9f8-ee12-11ea-39ae-0107e9107ef5
 md"_Edit the cell above, or create a new cell with your own test cases!_"
 
@@ -253,8 +217,7 @@ md"""
 
 # ╔═╡ 8a7d3cfd-6f19-43f0-ae16-d5a236f148e7
 function box_blur_kernel(l)
-	
-	return missing
+	[1 / (2 * l + 1) for i=-l:l]
 end
 
 # ╔═╡ a34d1ad8-3776-4bc4-93e5-72cfffc54f15
@@ -267,12 +230,6 @@ box_blur_kernel_test = box_blur_kernel(box_kernel_l)
 md"""
 Let's apply your kernel to our test vector `v` (first cell), and compare the result to our previous box blur function (second cell). The two should be identical.
 """
-
-# ╔═╡ bbe1a562-8d97-4112-a88a-c45c260f574d
-let
-	result = box_blur(v, box_kernel_l)
-	colored_line(result)
-end
 
 # ╔═╡ 03f91a22-1c3e-4c42-9d78-1ee36851a120
 md"""
@@ -299,15 +256,6 @@ md"""
 We need to **sample** (i.e. evaluate) this at each pixel in an interval of length $2n+1$,
 and then **normalize** so that the sum of the resulting kernel is 1.
 """
-
-# ╔═╡ 1c8b4658-ee0c-11ea-2ede-9b9ed7d3125e
-function gaussian_kernel_1D(n; σ = 1)
-	
-	return missing
-end
-
-# ╔═╡ a6149507-d5ba-45c1-896a-3487070d36ec
-colored_line(gaussian_kernel_1D(4; σ=1))
 
 # ╔═╡ f8bd22b8-ee14-11ea-04aa-ab16fd01826e
 md"""
@@ -353,8 +301,8 @@ md"""
 
 # ╔═╡ 7c2ec6c6-ee15-11ea-2d7d-0d9401a5e5d1
 function extend(M::AbstractMatrix, i, j)
-	
-	return missing
+	nr, nc = size(M)
+	M[clamp(i, 1, nr), clamp(j, 1, nc)]
 end
 
 # ╔═╡ 803905b2-ee09-11ea-2d52-e77ff79693b0
@@ -371,6 +319,47 @@ if extend(v,1) === missing
 	missing
 else
 	colored_line([extend(example_vector, i) for i in -1:length(example_vector)+2])
+end
+
+# ╔═╡ 807e5662-ee09-11ea-3005-21fdcc36b023
+function box_blur(v::AbstractArray, l)
+	[mean([extend(v, i+j) for j=-l:l])
+		for i in eachindex(v)]
+end
+
+# ╔═╡ 4f08ebe8-b781-4a32-a218-5ecd8338561d
+colored_line(box_blur(example_vector, 1))
+
+# ╔═╡ 808deca8-ee09-11ea-0ee3-1586fa1ce282
+let
+	try
+		test_v = rand(n)
+		original = copy(test_v)
+		box_blur(test_v, 5)
+		if test_v != original
+			md"""
+			!!! danger "Oopsie!"
+			    It looks like your function _modifies_ `v`. Can you write it without doing so? Maybe you can use `copy`.
+			"""
+		end
+	catch
+	end
+end
+
+# ╔═╡ 7d80a1ea-a0a9-41b2-9cfe-a334717ab2f4
+colored_line(box_blur(v, l_box))
+
+# ╔═╡ bbe1a562-8d97-4112-a88a-c45c260f574d
+let
+	result = box_blur(v, box_kernel_l)
+	colored_line(result)
+end
+
+# ╔═╡ 28e20950-ee0c-11ea-0e0a-b5f2e570b56e
+function convolve(v::AbstractVector, k)
+	l = (length(k) - 1) ÷ 2
+	[sum([extend(v, i+j) * k[j+l+1] for j=-l:l])
+		for i in eachindex(v)]
 end
 
 # ╔═╡ 9afc4dca-ee16-11ea-354f-1d827aaa61d2
@@ -426,8 +415,13 @@ md"""
 
 # ╔═╡ 8b96e0bc-ee15-11ea-11cd-cfecea7075a0
 function convolve(M::AbstractMatrix, K::AbstractMatrix)
-	
-	return missing
+	nr, nc = size(M)
+	kr, kc = size(K)
+	hr = (kr - 1) ÷ 2
+	hc = (kc - 1) ÷ 2
+	[sum([extend(M, i+ki, j+kj) * K[ki+hr+1, kj+hc+1]
+				for ki=-hr:hr, kj=-hc:hc]) 
+		for i=1:nr, j=1:nc]
 end
 
 # ╔═╡ 93284f92-ee12-11ea-0342-833b1a30625c
@@ -445,31 +439,6 @@ let
 	result = convolve(v, box_blur_kernel_test)
 	colored_line(result)
 end
-
-# ╔═╡ 38eb92f6-ee13-11ea-14d7-a503ac04302e
-test_gauss_1D_a = let
-	k = gaussian_kernel_1D(gaussian_kernel_size_1D)
-	
-	if k !== missing
-		convolve(v, k)
-	end
-end
-
-# ╔═╡ b424e2aa-ee14-11ea-33fa-35491e0b9c9d
-colored_line(test_gauss_1D_a)
-
-# ╔═╡ 24c21c7c-ee14-11ea-1512-677980db1288
-test_gauss_1D_b = let
-	v = create_bar()
-	k = gaussian_kernel_1D(gaussian_kernel_size_1D)
-	
-	if k !== missing
-		convolve(v, k)
-	end
-end
-
-# ╔═╡ bc1c20a4-ee14-11ea-3525-63c9fa78f089
-colored_line(test_gauss_1D_b)
 
 # ╔═╡ 5a5135c6-ee1e-11ea-05dc-eb0c683c2ce5
 md"_Let's test it out! 🎃_"
@@ -515,15 +484,54 @@ How can you express this mathematically using the 1D Gaussian function that we d
 # ╔═╡ f4d9fd6f-0f1b-4dec-ae68-e61550cee790
 gauss(x, y; σ=1) = 2π*σ^2 * gauss(x; σ=σ) * gauss(y; σ=σ)
 
+# ╔═╡ 1c8b4658-ee0c-11ea-2ede-9b9ed7d3125e
+function gaussian_kernel_1D(n; σ = 1)
+	k = [gauss(i;σ=σ) for i=-n:n]
+	k ./ sum(k)
+end
+
+# ╔═╡ a6149507-d5ba-45c1-896a-3487070d36ec
+colored_line(gaussian_kernel_1D(4; σ=1))
+
+# ╔═╡ 38eb92f6-ee13-11ea-14d7-a503ac04302e
+test_gauss_1D_a = let
+	k = gaussian_kernel_1D(gaussian_kernel_size_1D)
+	
+	if k !== missing
+		convolve(v, k)
+	end
+end
+
+# ╔═╡ b424e2aa-ee14-11ea-33fa-35491e0b9c9d
+colored_line(test_gauss_1D_a)
+
+# ╔═╡ 24c21c7c-ee14-11ea-1512-677980db1288
+test_gauss_1D_b = let
+	v = create_bar()
+	k = gaussian_kernel_1D(gaussian_kernel_size_1D)
+	
+	if k !== missing
+		convolve(v, k)
+	end
+end
+
+# ╔═╡ bc1c20a4-ee14-11ea-3525-63c9fa78f089
+colored_line(test_gauss_1D_b)
+
 # ╔═╡ 7c50ea80-ee15-11ea-328f-6b4e4ff20b7e
 md"""
 👉 Write a function that applies a **Gaussian blur** to an image. Use your previous functions, and add cells to write helper functions as needed!
 """
 
+# ╔═╡ ed190e3a-83bd-11eb-34c0-53964ed41de4
+function gaussian_kernel_2D(n; σ = 1)
+	k = [gauss(i, j; σ=σ) for i=-n:n, j=-n:n]
+	k ./ sum(k)
+end
+
 # ╔═╡ aad67fd0-ee15-11ea-00d4-274ec3cda3a3
 function with_gaussian_blur(image; σ=3, l=5)
-	
-	return missing
+	convolve(image, gaussian_kernel_2D(l; σ=σ))
 end
 
 # ╔═╡ 8ae59674-ee18-11ea-3815-f50713d0fa08
@@ -572,10 +580,25 @@ where each operation applies *element-wise* on the matrices.
 Use your previous functions, and add cells to write helper functions as needed!
 """
 
+# ╔═╡ 8e5aaa68-83be-11eb-0df4-2df88b9da0b8
+sobel_x_kernel = [
+	1 0 -1
+	2 0 -2
+	1 0 -1
+]
+
+# ╔═╡ a06e5a4e-83be-11eb-0f67-8fe4421b5e14
+sobel_y_kernel = [
+	1  2  1
+	0  0  0
+	-1 -2 -1
+]
+
 # ╔═╡ 9eeb876c-ee15-11ea-1794-d3ea79f47b75
 function with_sobel_edge_detect(image)
-	
-	return missing
+	with_gx = convolve(image, sobel_x_kernel)
+	with_gy = convolve(image, sobel_y_kernel)
+	sqrt.(with_gx .^ 2 .+ with_gy .^ 2)
 end
 
 # ╔═╡ 8ffe16ce-ee20-11ea-18bd-15640f94b839
@@ -1131,6 +1154,7 @@ Gray.(with_sobel_edge_detect(sobel_camera_image))
 # ╟─79eb0775-3582-446b-996a-0b64301394d0
 # ╠═f4d9fd6f-0f1b-4dec-ae68-e61550cee790
 # ╟─7c50ea80-ee15-11ea-328f-6b4e4ff20b7e
+# ╠═ed190e3a-83bd-11eb-34c0-53964ed41de4
 # ╠═aad67fd0-ee15-11ea-00d4-274ec3cda3a3
 # ╟─9def5f32-ee15-11ea-1f74-f7e6690f2efa
 # ╟─8ae59674-ee18-11ea-3815-f50713d0fa08
@@ -1141,6 +1165,8 @@ Gray.(with_sobel_edge_detect(sobel_camera_image))
 # ╟─d5ffc6ab-156b-4d43-ac3d-1947d0176e7f
 # ╟─f461f5f2-ee18-11ea-3d03-95f57f9bf09e
 # ╟─7c6642a6-ee15-11ea-0526-a1aac4286cdd
+# ╠═8e5aaa68-83be-11eb-0df4-2df88b9da0b8
+# ╠═a06e5a4e-83be-11eb-0f67-8fe4421b5e14
 # ╠═9eeb876c-ee15-11ea-1794-d3ea79f47b75
 # ╠═1a0324de-ee19-11ea-1d4d-db37f4136ad3
 # ╠═1bf94c00-ee19-11ea-0e3c-e12bc68d8e28
